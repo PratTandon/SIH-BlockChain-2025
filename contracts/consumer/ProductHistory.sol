@@ -189,30 +189,19 @@ contract ProductHistory is AgriAccessControl {
         require(bytes(productName).length > 0, "ProductHistory: Product name required");
         require(originHash != bytes32(0), "ProductHistory: Origin hash required");
 
-        bytes32 publicDataHash = keccak256(abi.encodePacked(
+        // Split the function to avoid stack too deep error
+        _setPublicInfo(
+            productId,
             productName,
             productType,
             originHash,
+            certificationHash,
+            qualityHash,
             harvestDate,
+            expiryDate,
             isOrganic,
             isLocal
-        ));
-
-        _publicInfo[productId] = PublicProductInfo({
-            productId: productId,
-            productName: productName,
-            productType: productType,
-            originHash: originHash,
-            certificationHash: certificationHash,
-            qualityHash: qualityHash,
-            harvestDate: harvestDate,
-            expiryDate: expiryDate,
-            isOrganic: isOrganic,
-            isLocal: isLocal,
-            lastUpdated: block.timestamp
-        });
-
-        emit PublicInfoUpdated(productId, publicDataHash, block.timestamp);
+        );
     }
 
     /**
@@ -394,6 +383,46 @@ contract ProductHistory is AgriAccessControl {
     }
 
     // ============ INTERNAL FUNCTIONS ============
+    /**
+     * @dev Set public info - internal function to avoid stack too deep
+     */
+    function _setPublicInfo(
+        uint256 productId,
+        string calldata productName,
+        string calldata productType,
+        bytes32 originHash,
+        bytes32 certificationHash,
+        bytes32 qualityHash,
+        uint256 harvestDate,
+        uint256 expiryDate,
+        bool isOrganic,
+        bool isLocal
+    ) internal {
+        bytes32 publicDataHash = keccak256(abi.encodePacked(
+            productName,
+            productType,
+            originHash,
+            harvestDate,
+            isOrganic,
+            isLocal
+        ));
+
+        PublicProductInfo storage info = _publicInfo[productId];
+        info.productId = productId;
+        info.productName = productName;
+        info.productType = productType;
+        info.originHash = originHash;
+        info.certificationHash = certificationHash;
+        info.qualityHash = qualityHash;
+        info.harvestDate = harvestDate;
+        info.expiryDate = expiryDate;
+        info.isOrganic = isOrganic;
+        info.isLocal = isLocal;
+        info.lastUpdated = block.timestamp;
+
+        emit PublicInfoUpdated(productId, publicDataHash, block.timestamp);
+    }
+
     /**
      * @dev Update traceability path
      */
