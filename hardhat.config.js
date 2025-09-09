@@ -9,7 +9,7 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
-      viaIR: true,
+      // viaIR: true, // Comment this out temporarily
     },
   },
   networks: {
